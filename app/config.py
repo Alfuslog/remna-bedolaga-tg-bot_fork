@@ -1218,6 +1218,7 @@ class Settings(BaseSettings):
     ETOPLATEZHI_CARD_DISPLAY_NAME: str = 'Карта (Etoplatezhi)'
 
     MAIN_MENU_MODE: str = 'default'  # 'default' | 'cabinet'
+    MENU_VARIANT: str = 'default'  # 'default' | 'b'
     # Rich-меню (Bot API 10.1): заголовки, таблица подписок, details-блоки, tg-time.
     # Требует telegram-bot-api с Bot API 10.1+; при недоступности бот сам откатывается
     # на классический рендер до рестарта. В rich-режиме главное меню идёт без логотипа.

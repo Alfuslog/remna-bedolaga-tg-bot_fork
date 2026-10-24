@@ -569,6 +569,94 @@ def _build_cabinet_main_menu_keyboard(
     return InlineKeyboardMarkup(inline_keyboard=keyboard_rows)
 
 
+
+def get_state_menu_keyboard(
+    language,
+    texts,
+    *,
+    is_admin=False,
+    is_moderator=False,
+    has_active_subscription=False,
+    subscription_is_active=False,
+    has_had_paid_subscription=False,
+    balance_kopeks=0,
+    subscription=None,
+):
+    """Variant B: next-best-action main menu."""
+    rows = []
+
+    def b(text, data):
+        return InlineKeyboardButton(text=text, callback_data=data)
+
+    show_trial = (
+        not has_had_paid_subscription
+        and not has_active_subscription
+        and settings.TRIAL_DURATION_DAYS > 0
+        and settings.TRIAL_DISABLED_FOR != 'all'
+    )
+    active = bool(has_active_subscription and subscription_is_active)
+
+    if active:
+        rows.append(
+            [
+                b(
+                    texts.t('CONNECT_BUTTON', '🔗 Подключиться'),
+                    'subscription_connect',
+                )
+            ]
+        )
+        rows.append(
+            [
+                b(texts.t('MENU_SUBSCRIPTION', '📱 Подписка'), 'menu_subscription'),
+                b(texts.t('MENU_EXTEND_SUBSCRIPTION', '⏰ Продлить'), 'subscription_extend'),
+            ]
+        )
+        rows.append(
+            [
+                b(texts.t('MENU_BALANCE', '💰 Баланс'), 'menu_balance'),
+                b(texts.t('MENU_HELP', '🆘 Помощь'), 'menu_support'),
+            ]
+        )
+    else:
+        if show_trial:
+            rows.append(
+                [
+                    b(
+                        f"🧪 Тест на {settings.TRIAL_DURATION_DAYS} дн.",
+                        'menu_trial',
+                    )
+                ]
+            )
+        else:
+            label = '🔄 Продлить' if subscription else texts.t('MENU_BUY_SUBSCRIPTION', '💎 Выбрать тариф')
+            rows.append([b(label, 'menu_buy')])
+
+        second = []
+        if subscription:
+            second.append(b(texts.t('MENU_SUBSCRIPTION', '📱 Подписка'), 'menu_subscription'))
+        if show_trial:
+            second.append(b(texts.t('MENU_BUY_SUBSCRIPTION', '💎 Тарифы'), 'menu_buy'))
+        second.append(b('🎬 Как подключиться', 'menu_howto'))
+        if second:
+            rows.append(second)
+
+        rows.append(
+            [
+                b(texts.t('MENU_BALANCE', '💰 Баланс'), 'menu_balance'),
+                b(texts.t('MENU_HELP', '🆘 Помощь'), 'menu_support'),
+            ]
+        )
+
+    rows.append([b('⋯ Ещё', 'menu_more')])
+
+    if is_admin:
+        rows.append([b(texts.MENU_ADMIN, 'admin_panel')])
+    elif is_moderator:
+        rows.append([b('🧑‍⚖️ Модерация', 'moderator_panel')])
+
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
 def get_main_menu_keyboard(
     language: str = DEFAULT_LANGUAGE,
     is_admin: bool = False,
@@ -592,6 +680,19 @@ def get_main_menu_keyboard(
             is_admin=is_admin,
             is_moderator=is_moderator,
             balance_kopeks=balance_kopeks,
+        )
+
+    if getattr(settings, 'MENU_VARIANT', 'default').lower() == 'b':
+        return get_state_menu_keyboard(
+            language,
+            texts,
+            is_admin=is_admin,
+            is_moderator=is_moderator,
+            has_active_subscription=has_active_subscription,
+            subscription_is_active=subscription_is_active,
+            has_had_paid_subscription=has_had_paid_subscription,
+            balance_kopeks=balance_kopeks,
+            subscription=subscription,
         )
 
     if settings.DEBUG:

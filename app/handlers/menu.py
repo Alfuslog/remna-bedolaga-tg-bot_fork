@@ -1689,6 +1689,98 @@ async def handle_activate_button(callback: types.CallbackQuery, db_user: User, d
         )
 
 
+
+async def show_howto(callback: types.CallbackQuery, db_user: User):
+    texts = get_texts(db_user.language)
+    text = texts.t(
+        'MENU_HOWTO_TEXT',
+        '🎬 <b>Как подключиться</b>\n\n'
+        '1. Нажмите «Подключиться» в главном меню.\n'
+        '2. Установите Happ или v2rayNG.\n'
+        '3. Вставьте ссылку подписки.\n\n'
+        'Если не получается — напишите в поддержку.',
+    )
+    keyboard = types.InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                types.InlineKeyboardButton(
+                    text=texts.t('MENU_SUPPORT', '🆘 Поддержка'),
+                    callback_data='menu_support',
+                )
+            ],
+            [types.InlineKeyboardButton(text=texts.BACK, callback_data='back_to_menu')],
+        ]
+    )
+    await edit_or_answer_photo(
+        callback=callback,
+        caption=text,
+        keyboard=keyboard,
+        parse_mode='HTML',
+    )
+    await callback.answer()
+
+
+async def show_more_menu(callback: types.CallbackQuery, db_user: User):
+    texts = get_texts(db_user.language)
+    rows = []
+    if settings.is_referral_program_enabled():
+        rows.append([
+            types.InlineKeyboardButton(
+                text=texts.t('MENU_REFERRALS', '🤝 Партнерка'),
+                callback_data='menu_referrals',
+            )
+        ])
+    rows.append([
+        types.InlineKeyboardButton(
+            text=texts.t('MENU_PROMOCODE', '🎫 Промокод'),
+            callback_data='menu_promocode',
+        )
+    ])
+    if settings.CONTESTS_ENABLED and settings.CONTESTS_BUTTON_VISIBLE:
+        rows.append([
+            types.InlineKeyboardButton(
+                text=texts.t('CONTESTS_BUTTON', '🎲 Конкурсы'),
+                callback_data='contests_menu',
+            )
+        ])
+    if settings.is_language_selection_enabled():
+        rows.append([
+            types.InlineKeyboardButton(
+                text=texts.t('MENU_LANGUAGE', '🌐 Язык'),
+                callback_data='menu_language',
+            )
+        ])
+    rows.insert(
+        0,
+        [
+            types.InlineKeyboardButton(
+                text='🎬 Как подключиться',
+                callback_data='menu_howto',
+            )
+        ],
+    )
+    rows.append([
+        types.InlineKeyboardButton(
+            text=texts.t('MENU_INFO', 'ℹ️ Инфо и правила'),
+            callback_data='menu_info',
+        )
+    ])
+    rows.append([
+        types.InlineKeyboardButton(
+            text=texts.t('BACK_TO_MAIN_MENU_BUTTON', '⬅️ В главное меню'),
+            callback_data='back_to_menu',
+        )
+    ])
+
+    await edit_or_answer_photo(
+        callback=callback,
+        caption='⋯ <b>Ещё</b>\n\nВыберите раздел:',
+        keyboard=types.InlineKeyboardMarkup(inline_keyboard=rows),
+        parse_mode='HTML',
+    )
+    await callback.answer()
+
+
 def register_handlers(dp: Dispatcher):
     dp.callback_query.register(handle_back_to_menu, F.data == 'back_to_menu')
 
@@ -1708,6 +1800,9 @@ def register_handlers(dp: Dispatcher):
         show_info_menu,
         F.data == 'menu_info',
     )
+
+    dp.callback_query.register(show_howto, F.data == 'menu_howto')
+    dp.callback_query.register(show_more_menu, F.data == 'menu_more')
 
     dp.callback_query.register(
         show_promo_groups_info,
