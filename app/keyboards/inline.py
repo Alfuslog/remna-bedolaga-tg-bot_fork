@@ -622,7 +622,7 @@ def get_state_menu_keyboard(
             rows.append(
                 [
                     b(
-                        f"🧪 Тест на {settings.TRIAL_DURATION_DAYS} дн.",
+                        f'🧪 Тест на {settings.TRIAL_DURATION_DAYS} дн.',
                         'menu_trial',
                     )
                 ]
